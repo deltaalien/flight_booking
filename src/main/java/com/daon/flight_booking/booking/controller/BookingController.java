@@ -1,6 +1,7 @@
 package com.daon.flight_booking.booking.controller;
 
 import com.daon.flight_booking.booking.dto.BookingResponse;
+import com.daon.flight_booking.booking.dto.BookingsMap;
 import com.daon.flight_booking.booking.dto.CreateBookingRequest;
 import com.daon.flight_booking.booking.service.BookingService;
 import com.daon.flight_booking.user.security.UserPrincipal;
@@ -42,6 +43,16 @@ public class BookingController {
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(bookingService.createBooking(id, request, OffsetDateTime.now(), principal));
+    }
+
+    @GetMapping("/flights/{id}/bookings")
+    @Operation(summary = "Get seat status for flight")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Matrix with statuses of seat"),
+            @ApiResponse(responseCode = "404", description = "Flight not found"),
+    })
+    public ResponseEntity<BookingsMap> getBookingsForFlight(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.getBookingsMap(id));
     }
 
     @PostMapping("/bookings/{id}/confirm")

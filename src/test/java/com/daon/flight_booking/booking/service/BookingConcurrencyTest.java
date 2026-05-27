@@ -47,10 +47,14 @@ class BookingConcurrencyTest {
         registry.add("spring.liquibase.contexts", () -> "test");
     }
 
-    @Autowired FlightRepository flightRepository;
-    @Autowired UserRepository userRepository;
-    @Autowired BookingRepository bookingRepository;
-    @Autowired BookingService bookingService;
+    @Autowired
+    FlightRepository flightRepository;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    BookingRepository bookingRepository;
+    @Autowired
+    BookingService bookingService;
 
     Flight flight;
     User user;

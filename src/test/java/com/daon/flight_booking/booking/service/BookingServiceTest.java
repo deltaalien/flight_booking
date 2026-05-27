@@ -3,15 +3,16 @@ package com.daon.flight_booking.booking.service;
 import com.daon.flight_booking.booking.domain.Booking;
 import com.daon.flight_booking.booking.domain.BookingStatus;
 import com.daon.flight_booking.booking.dto.BookingResponse;
+import com.daon.flight_booking.booking.dto.BookingsMap;
 import com.daon.flight_booking.booking.dto.CreateBookingRequest;
 import com.daon.flight_booking.booking.exception.BookingNotFoundException;
 import com.daon.flight_booking.booking.exception.SeatUnavailableException;
+import com.daon.flight_booking.flight.service.FlightService;
 import com.daon.flight_booking.shared.BookingProperties;
 import com.daon.flight_booking.booking.repository.BookingRepository;
 import com.daon.flight_booking.flight.domain.Airport;
 import com.daon.flight_booking.flight.domain.Flight;
 import com.daon.flight_booking.flight.exception.FlightNotFoundException;
-import com.daon.flight_booking.flight.repository.FlightRepository;
 import com.daon.flight_booking.user.domain.Role;
 import com.daon.flight_booking.user.domain.User;
 import com.daon.flight_booking.user.exception.UserNotFoundException;
@@ -29,6 +30,7 @@ import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,10 +44,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BookingServiceTest {
 
-    @Mock FlightRepository flightRepository;
-    @Mock UserRepository userRepository;
-    @Mock BookingRepository bookingRepository;
-    @Mock BookingProperties bookingProperties;
+    @Mock
+    FlightService flightService;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    BookingRepository bookingRepository;
+    @Mock
+    BookingProperties bookingProperties;
 
     @InjectMocks
     BookingService bookingService;
@@ -59,7 +65,7 @@ class BookingServiceTest {
     void createBooking_validRequest_returnsMappedResponse() {
         Flight flight = buildFlight(20, 6, OffsetDateTime.now().plusDays(30));
         User user = User.builder().id(1L).email("alice@example.com").role(Role.USER).build();
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(flight));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(bookingRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -74,7 +80,7 @@ class BookingServiceTest {
     @Test
     void createBooking_flightNotFound_throwsFlightNotFoundException() {
         User user = User.builder().id(1L).role(Role.USER).build();
-        when(flightRepository.findById(99L)).thenReturn(Optional.empty());
+        when(flightService.getFlightById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createBooking(99L, buildRequest(1L, 1, 1), OffsetDateTime.now(), principalFor(user)))
                 .isInstanceOf(FlightNotFoundException.class)
@@ -86,7 +92,7 @@ class BookingServiceTest {
         Flight deleted = buildFlight(20, 6, OffsetDateTime.now().plusDays(30));
         deleted.setDeleted(true);
         User user = User.builder().id(1L).role(Role.USER).build();
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(deleted));
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(deleted));
 
         assertThatThrownBy(() -> bookingService.createBooking(1L, buildRequest(1L, 1, 1), OffsetDateTime.now(), principalFor(user)))
                 .isInstanceOf(FlightNotFoundException.class);
@@ -96,7 +102,7 @@ class BookingServiceTest {
     void createBooking_pastCutoff_throwsBookingWindowClosedException() {
         Flight flight = buildFlight(20, 6, OffsetDateTime.now().minusHours(1));
         User user = User.builder().id(1L).role(Role.USER).build();
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(flight));
 
         assertThatThrownBy(() -> bookingService.createBooking(1L, buildRequest(1L, 1, 1), OffsetDateTime.now(), principalFor(user)))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -106,7 +112,7 @@ class BookingServiceTest {
     void createBooking_seatRowOutOfRange_throwsSeatOutOfRangeException() {
         Flight flight = buildFlight(20, 6, OffsetDateTime.now().plusDays(30));
         User user = User.builder().id(1L).role(Role.USER).build();
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(flight));
 
         assertThatThrownBy(() -> bookingService.createBooking(1L, buildRequest(1L, 99, 1), OffsetDateTime.now(), principalFor(user)))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -116,7 +122,7 @@ class BookingServiceTest {
     void createBooking_constraintViolation_throwsSeatUnavailableException() {
         Flight flight = buildFlight(20, 6, OffsetDateTime.now().plusDays(30));
         User user = User.builder().id(1L).email("alice@example.com").role(Role.USER).build();
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(flight));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(bookingRepository.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("unique"));
 
@@ -130,7 +136,7 @@ class BookingServiceTest {
     void createBooking_userNotFound_throwsUserNotFoundException() {
         Flight flight = buildFlight(20, 6, OffsetDateTime.now().plusDays(30));
         User user = User.builder().id(99L).role(Role.USER).build();
-        when(flightRepository.findById(1L)).thenReturn(Optional.of(flight));
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(flight));
         when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createBooking(1L, buildRequest(99L, 1, 1), OffsetDateTime.now(), principalFor(user)))
@@ -288,6 +294,47 @@ class BookingServiceTest {
 
         assertThatThrownBy(() -> bookingService.confirmBooking(id, OffsetDateTime.now(), principalFor(other)))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void getBookingsMap_seatStatuses_mappedCorrectly() {
+        Flight flight = buildFlight(3, 3, OffsetDateTime.now().plusDays(30));
+        User user = User.builder().id(1L).email("alice@example.com").role(Role.USER).build();
+        Booking held = Booking.builder()
+                .id(UUID.randomUUID()).flight(flight).user(user).seat("2@3")
+                .status(BookingStatus.HELD)
+                .holdUntil(OffsetDateTime.now().plusMinutes(10))
+                .createdAt(OffsetDateTime.now())
+                .build();
+        Booking confirmed = Booking.builder()
+                .id(UUID.randomUUID()).flight(flight).user(user).seat("1@1")
+                .status(BookingStatus.CONFIRMED)
+                .holdUntil(OffsetDateTime.now().plusMinutes(10))
+                .createdAt(OffsetDateTime.now())
+                .build();
+        Booking cancelled = Booking.builder()
+                .id(UUID.randomUUID()).flight(flight).user(user).seat("3@2")
+                .status(BookingStatus.CANCELLED)
+                .holdUntil(OffsetDateTime.now().plusMinutes(10))
+                .createdAt(OffsetDateTime.now())
+                .build();
+        when(flightService.getFlightById(1L)).thenReturn(Optional.of(flight));
+        when(bookingRepository.findByFlightId(1L)).thenReturn(List.of(held, confirmed, cancelled));
+
+        BookingsMap result = bookingService.getBookingsMap(1L);
+
+        assertThat(result.getSeats()[1][2]).isEqualTo(BookingsMap.SeatStatus.H);
+        assertThat(result.getSeats()[0][0]).isEqualTo(BookingsMap.SeatStatus.B);
+        assertThat(result.getSeats()[2][1]).isEqualTo(BookingsMap.SeatStatus.O);
+    }
+
+    @Test
+    void getBookingsMap_unknownFlight_throwsFlightNotFoundException() {
+        when(flightService.getFlightById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.getBookingsMap(99L))
+                .isInstanceOf(FlightNotFoundException.class)
+                .hasMessageContaining("99");
     }
 
     private Flight buildFlight(int seatRows, int seatColumns, OffsetDateTime openForBookingUntil) {

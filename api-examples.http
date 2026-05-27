@@ -47,6 +47,9 @@ Authorization: Basic Ym9iOnVzZXIxMjM=
 DELETE {{baseUrl}}/bookings/{{bookingId}}
 Authorization: Basic Ym9iOnVzZXIxMjM=
 
+### Get seat map for flight 1
+GET {{baseUrl}}/flights/1/bookings
+
 ### Create a flight
 POST {{baseUrl}}/admin/flights
 Authorization: Basic YWxpY2U6YWRtaW4xMjM=

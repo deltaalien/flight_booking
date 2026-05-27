@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,4 +32,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     int cancelActiveBookingsForFlight(@Param("flightId") Long flightId,
                                       @Param("activeStatuses") Collection<BookingStatus> activeStatuses,
                                       @Param("newStatus") BookingStatus newStatus);
+
+    List<Booking> findByFlightId(long flightId);
 }

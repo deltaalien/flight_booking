@@ -2,7 +2,7 @@ package com.daon.flight_booking.flight.controller;
 
 import com.daon.flight_booking.flight.dto.CreateFlightRequest;
 import com.daon.flight_booking.flight.dto.FlightResponse;
-import com.daon.flight_booking.flight.service.FlightService;
+import com.daon.flight_booking.flight.service.FlightAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Flights (admin)")
 public class FlightAdminController {
 
-    private final FlightService flightService;
+    private final FlightAdminService flightAdminService;
 
     @PostMapping
     @Operation(summary = "Create flight")
@@ -30,7 +30,7 @@ public class FlightAdminController {
             @ApiResponse(responseCode = "403", description = "Forbidden")
     })
     public ResponseEntity<FlightResponse> createFlight(@RequestBody @Valid CreateFlightRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(flightService.createFlight(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(flightAdminService.createFlight(request));
     }
 
     @DeleteMapping("/{id}")
@@ -43,6 +43,6 @@ public class FlightAdminController {
             @ApiResponse(responseCode = "404", description = "Flight not found")
     })
     public void deleteFlight(@PathVariable Long id) {
-        flightService.deleteFlight(id);
+        flightAdminService.deleteFlight(id);
     }
 }

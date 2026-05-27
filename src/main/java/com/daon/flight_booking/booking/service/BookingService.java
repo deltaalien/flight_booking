@@ -3,13 +3,14 @@ package com.daon.flight_booking.booking.service;
 import com.daon.flight_booking.booking.domain.Booking;
 import com.daon.flight_booking.booking.domain.BookingStatus;
 import com.daon.flight_booking.booking.dto.BookingResponse;
+import com.daon.flight_booking.booking.dto.BookingsMap;
 import com.daon.flight_booking.booking.dto.CreateBookingRequest;
 import com.daon.flight_booking.booking.exception.BookingNotFoundException;
 import com.daon.flight_booking.booking.exception.SeatUnavailableException;
 import com.daon.flight_booking.booking.repository.BookingRepository;
 import com.daon.flight_booking.flight.domain.Flight;
 import com.daon.flight_booking.flight.exception.FlightNotFoundException;
-import com.daon.flight_booking.flight.repository.FlightRepository;
+import com.daon.flight_booking.flight.service.FlightService;
 import com.daon.flight_booking.shared.BookingProperties;
 import com.daon.flight_booking.shared.TimeUtil;
 import com.daon.flight_booking.user.domain.Role;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +36,7 @@ public class BookingService {
 
     private static final String SEAT_FORMAT = "%d@%d";
 
-    private final FlightRepository flightRepository;
+    private final FlightService flightService;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final BookingProperties bookingProperties;
@@ -47,7 +49,7 @@ public class BookingService {
             userId = request.getUserId();
         }
 
-        Flight flight = flightRepository.findById(flightId)
+        Flight flight = flightService.getFlightById(flightId)
                 .filter(f -> !f.isDeleted())
                 .orElseThrow(() -> new FlightNotFoundException(flightId));
 
@@ -126,6 +128,32 @@ public class BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         return toResponse(bookingRepository.save(booking));
     }
+
+    public BookingsMap getBookingsMap(long flightId) {
+        Flight flight = flightService.getFlightById(flightId)
+                .orElseThrow(() -> new FlightNotFoundException(flightId));
+
+        List<Booking> bookings = bookingRepository.findByFlightId(flightId);
+
+        BookingsMap.SeatStatus[][] seatStatuses = new BookingsMap.SeatStatus[flight.getSeatRows()][flight.getSeatColumns()];
+
+        for(var row : seatStatuses) {
+            Arrays.fill(row, BookingsMap.SeatStatus.O);
+        }
+
+        bookings.stream()
+                .filter(e-> BookingStatus.CANCELLED != e.getStatus())
+                .forEach(e-> {
+                    String[] rowCol = e.getSeat().split("@");
+                    int row = Integer.parseInt(rowCol[0]) - 1;
+                    int col = Integer.parseInt(rowCol[1]) - 1;
+
+                    seatStatuses[row][col] = BookingsMap.SeatStatus.fromBookingStatus(e.getStatus());
+                });
+
+        return new BookingsMap(flightId, seatStatuses);
+    }
+
 
     private BookingResponse toResponse(Booking booking) {
         String tz = booking.getFlight().getTimezone();
