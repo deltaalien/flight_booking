@@ -1,0 +1,82 @@
+@baseUrl = http://localhost:8080
+
+### List all flights
+GET {{baseUrl}}/flights
+
+### Filter by route
+GET {{baseUrl}}/flights?origin=DUB&destination=LHR
+
+### Filter by origin only
+GET {{baseUrl}}/flights?origin=DUB
+
+### Filter by date
+GET {{baseUrl}}/flights?date=2026-06-26&timezone=Europe/Dublin
+
+### Register a new user (public — no auth required)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "username": "charlie",
+  "email": "charlie@example.com",
+  "name": "Charlie Brown",
+  "password": "secret123"
+}
+
+
+### Booking flow
+### 1. Book a seat on flight 1 as bob — hold lasts 15 minutes
+POST {{baseUrl}}/flights/1/bookings
+Authorization: Basic Ym9iOnVzZXIxMjM=
+Content-Type: application/json
+
+{
+  "row": 3,
+  "column": 2
+}
+
+> {%
+  client.global.set("bookingId", response.body.id);
+%}
+
+### 2. Confirm the booking
+POST {{baseUrl}}/bookings/{{bookingId}}/confirm
+Authorization: Basic Ym9iOnVzZXIxMjM=
+
+### 3. Cancel the booking
+DELETE {{baseUrl}}/bookings/{{bookingId}}
+Authorization: Basic Ym9iOnVzZXIxMjM=
+
+### Create a flight
+POST {{baseUrl}}/admin/flights
+Authorization: Basic YWxpY2U6YWRtaW4xMjM=
+Content-Type: application/json
+
+{
+  "flightNumber": "EI999",
+  "origin": "DUB",
+  "destination": "BCN",
+  "departureTime": "2027-01-15T09:00:00",
+  "timezone": "Europe/Dublin",
+  "seatRows": 30,
+  "seatColumns": 6
+}
+
+> {%
+  client.global.set("newFlightId", response.body.id);
+%}
+
+### Delete the flight just created
+DELETE {{baseUrl}}/admin/flights/{{newFlightId}}
+Authorization: Basic YWxpY2U6YWRtaW4xMjM=
+
+### Admin books on behalf of another user
+POST {{baseUrl}}/flights/1/bookings
+Authorization: Basic YWxpY2U6YWRtaW4xMjM=
+Content-Type: application/json
+
+{
+  "row": 5,
+  "column": 1,
+  "userId": 2
+}

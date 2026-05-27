@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="002-create-flights" author="system">
+        <createTable tableName="flights">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="flight_number" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="origin" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="departure_time" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timezone" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seat_rows" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="seat_columns" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="open_for_booking_until" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

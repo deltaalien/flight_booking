@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="003-create-bookings" author="system">
+        <createTable tableName="bookings">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_bookings_user"
+                             references="users(id)"/>
+            </column>
+            <column name="flight_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_bookings_flight"
+                             references="flights(id)"/>
+            </column>
+            <column name="seat" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(20)" defaultValue="HELD">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hold_until" type="TIMESTAMP WITH TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE" defaultValueComputed="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <sql>
+            CREATE UNIQUE INDEX uq_bookings_active_flight_seat
+            ON bookings (flight_id, seat)
+            WHERE status IN ('HELD', 'CONFIRMED');
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

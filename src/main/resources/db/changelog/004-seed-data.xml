@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+    <changeSet id="004-seed-data" author="system" context="!test">
+
+        <insert tableName="users">
+            <column name="email"     value="alice@example.com"/>
+            <column name="name"      value="Alice Murphy"/>
+            <column name="username"  value="alice"/>
+            <!--admin123-->
+            <column name="password"  value="$2a$10$/jsbyCx82BYvkVOkWI6We.jgIkDqpcVyj6RQMyBgmtkIEPrQsUvpO"/>
+            <column name="role"      value="ADMIN"/>
+        </insert>
+        <insert tableName="users">
+            <column name="email"     value="bob@example.com"/>
+            <column name="name"      value="Bob Kelly"/>
+            <column name="username"  value="bob"/>
+            <!--user123-->
+            <column name="password"  value="$2a$10$/DmLTAt3bdwhdxLbUWMTx.be.ZuT4WdOvHYmdiuonuEaYHDV52AzG"/>
+            <column name="role"      value="USER"/>
+        </insert>
+
+        <insert tableName="flights">
+            <column name="flight_number"          value="EI101"/>
+            <column name="origin"                 value="DUB"/>
+            <column name="destination"            value="LHR"/>
+            <column name="departure_time"         valueComputed="now() + interval '30 days'"/>
+            <column name="timezone"               value="Europe/Dublin"/>
+            <column name="seat_rows"              valueNumeric="20"/>
+            <column name="seat_columns"           valueNumeric="6"/>
+            <column name="open_for_booking_until" valueComputed="now() + interval '30 days' - interval '45 minutes'"/>
+            <column name="deleted"                valueBoolean="false"/>
+        </insert>
+
+        <insert tableName="flights">
+            <column name="flight_number"          value="EI202"/>
+            <column name="origin"                 value="LHR"/>
+            <column name="destination"            value="DUB"/>
+            <column name="departure_time"         valueComputed="now() + interval '60 days'"/>
+            <column name="timezone"               value="Europe/London"/>
+            <column name="seat_rows"              valueNumeric="20"/>
+            <column name="seat_columns"           valueNumeric="6"/>
+            <column name="open_for_booking_until" valueComputed="now() + interval '60 days' - interval '45 minutes'"/>
+            <column name="deleted"                valueBoolean="false"/>
+        </insert>
+
+        <insert tableName="flights">
+            <column name="flight_number"          value="FR301"/>
+            <column name="origin"                 value="DUB"/>
+            <column name="destination"            value="AMS"/>
+            <column name="departure_time"         valueComputed="now() + interval '90 days'"/>
+            <column name="timezone"               value="Europe/Dublin"/>
+            <column name="seat_rows"              valueNumeric="25"/>
+            <column name="seat_columns"           valueNumeric="6"/>
+            <column name="open_for_booking_until" valueComputed="now() + interval '90 days' - interval '45 minutes'"/>
+            <column name="deleted"                valueBoolean="false"/>
+        </insert>
+
+        <insert tableName="flights">
+            <column name="flight_number"          value="BA400"/>
+            <column name="origin"                 value="LHR"/>
+            <column name="destination"            value="JFK"/>
+            <column name="departure_time"         valueComputed="now() + interval '120 days'"/>
+            <column name="timezone"               value="Europe/London"/>
+            <column name="seat_rows"              valueNumeric="30"/>
+            <column name="seat_columns"           valueNumeric="6"/>
+            <column name="open_for_booking_until" valueComputed="now() + interval '120 days' - interval '45 minutes'"/>
+            <column name="deleted"                valueBoolean="false"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

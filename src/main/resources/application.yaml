@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: flight-booking
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flight_booking}
+    username: ${SPRING_DATASOURCE_USERNAME:flight_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:flight_pass}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+
+
+booking:
+  cutoff-minutes: 45
+  hold-minutes: 15
+  expiry-cron: "0 * * * * *"
