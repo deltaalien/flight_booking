@@ -42,10 +42,12 @@ The `bookings` table has a partial unique index on `(flight_id, seat) WHERE stat
 Seat uniqueness is enforced at the database level. Canceled seats are automatically available for rebooking because the index ignores them.
 This approach also simplifies handling of race conditions when there are multiple booking requests for the same seat, since the DB will just throw
 a violation for the partial index. Another plus for this approach is that we don't need to hard-delete a booking.
+Verified by `concurrentBookingSameSeat_exactlyOneSucceeds` and `cancelledSeatCanBeRebooked_concurrently` in `BookingConcurrencyTest`.
 
 **Pessimistic locking on confirm and cancel**\
-`confirmBooking` and `cancelBooking` acquire a row-level lock (`SELECT FOR UPDATE`) before checking status. 
-Concurrent attempts on the same booking are serialized — exactly one wins.
+`confirmBooking` and `cancelBooking` acquire a row-level lock (`SELECT FOR UPDATE`) before checking status.
+Concurrent attempts on the same booking are processed sequentially, so only one succeeds.
+Verified by `concurrentConfirmSameBooking_exactlyOneSucceeds` and `concurrentCancelSameBooking_exactlyOneSucceeds` in `BookingConcurrencyTest`.
 
 **Departure time stored as UTC instant + IANA timezone string**\
 `departureTime` and `openForBookingUntil` are stored as `TIMESTAMP WITH TIME ZONE` (UTC-normalized). 
