@@ -5,15 +5,20 @@ import com.daon.flight_booking.user.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class BaseExceptionHandler {
 
-    public record ErrorResponse(String message) {}
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
+
+    public record ErrorResponse(Object message) {}
 
     @ExceptionHandler(FlightNotFoundException.class)
     ResponseEntity<ErrorResponse> handleFlightNotFound(FlightNotFoundException ex) {
@@ -51,11 +56,14 @@ public abstract class BaseExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
 
-        String message = ex.getBindingResult().getFieldErrors().stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .collect(Collectors.joining("; "));
+        Map<String, String> messages = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.toMap(FieldError::getField, BaseExceptionHandler::getDefaultMessage));
 
         return ResponseEntity.badRequest()
-                .body(new ErrorResponse(message));
+                .body(new ErrorResponse(jsonMapper.valueToTree(messages)));
+    }
+
+    private static String getDefaultMessage(FieldError fieldError) {
+        return fieldError.getDefaultMessage() != null ? fieldError.getDefaultMessage() : "No message";
     }
 }

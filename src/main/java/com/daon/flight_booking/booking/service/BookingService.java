@@ -15,9 +15,8 @@ import com.daon.flight_booking.shared.BookingProperties;
 import com.daon.flight_booking.shared.TimeUtil;
 import com.daon.flight_booking.user.domain.Role;
 import com.daon.flight_booking.user.domain.User;
-import com.daon.flight_booking.user.exception.UserNotFoundException;
-import com.daon.flight_booking.user.repository.UserRepository;
 import com.daon.flight_booking.user.security.UserPrincipal;
+import com.daon.flight_booking.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
@@ -37,17 +36,14 @@ public class BookingService {
     private static final String SEAT_FORMAT = "%d@%d";
 
     private final FlightService flightService;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final BookingRepository bookingRepository;
     private final BookingProperties bookingProperties;
 
     @Transactional
     public BookingResponse createBooking(Long flightId, CreateBookingRequest request, OffsetDateTime requestedAt, UserPrincipal principal) {
 
-        long userId = principal.user().getId();
-        if(isAdmin(principal) && request.getUserId() != null) {
-            userId = request.getUserId();
-        }
+        long userId = resolveUserId(request, principal);
 
         Flight flight = flightService.getFlightById(flightId)
                 .filter(f -> !f.isDeleted())
@@ -61,9 +57,7 @@ public class BookingService {
             throw new IllegalArgumentException("Seat out of range for this flight");
         }
 
-        long finalUserId = userId;
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(finalUserId));
+        User user = userService.getUserById(userId);
 
         Booking booking = Booking.builder()
                 .flight(flight)
@@ -172,6 +166,14 @@ public class BookingService {
 
     private static boolean isAdmin(UserPrincipal principal) {
         return Role.ADMIN == principal.user().getRole();
+    }
+
+    private static long resolveUserId(CreateBookingRequest request, UserPrincipal userPrincipal) {
+        if(isAdmin(userPrincipal) && request.getUserId() != null) {
+            return request.getUserId();
+        } else {
+            return userPrincipal.user().getId();
+        }
     }
 
     private static boolean isNotOwner(Booking booking, UserPrincipal userPrincipal) {

@@ -5,6 +5,7 @@ import com.daon.flight_booking.user.domain.User;
 import com.daon.flight_booking.user.dto.CreateUserRequest;
 import com.daon.flight_booking.user.dto.UserResponse;
 import com.daon.flight_booking.user.exception.DuplicateUserException;
+import com.daon.flight_booking.user.exception.UserNotFoundException;
 import com.daon.flight_booking.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,13 +34,18 @@ public class UserService {
         try {
             return toResponse(userRepository.save(user));
         } catch (DataIntegrityViolationException e) {
-            throw new DuplicateUserException(request.getEmail());
+            throw new DuplicateUserException(request.toString());
         }
     }
 
     public User getByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
+    }
+
+    public User getUserById(long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 
     private UserResponse toResponse(User user) {
